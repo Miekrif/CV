@@ -27,7 +27,7 @@ def create_connection(host_name, host_port, user_name, user_password, db_name):
             database=db_name
         )
         print("Connection to PostgreSQL DB successful")
-    except (errors, Exception) as e:
+    except errors and Exception as e:
         print(f"The error '{e}' occurred")
 
     return connection
@@ -35,10 +35,10 @@ def create_connection(host_name, host_port, user_name, user_password, db_name):
 
 # SQL-request for create new table
 def create_table(cursor, count_time, msg):
-    report = f'{datetime.now().strftime("%d/%m/%y")}'  # name of table
+    report = datetime.now().strftime("%d/%m/%y")  # name of table
     try:
         print(count_time)
-        create_table_query = f'''CREATE TABLE {report}
+        create_table_query = f'''CREATE TABLE "{report}"
                                   (
                                   name_of_column date PRIMARY KEY NOT NULL,
                                   stats text
@@ -49,39 +49,72 @@ def create_table(cursor, count_time, msg):
     except Exception as e:
         print('create_table', e)
 
+        # connection = create_connection(host_name, host_port, user_name, user_password, db_name)
+        # cursor = connection.cursor()
+        # add_new_column_to_table(cursor, msg, report)
+        # inster_into_table_one_day(cursor, msg, report)
+        # connection.commit()
+        # connection.close()
+
 
 #del old time table
 def add_new_column_to_table(cursor, msg, report):
     try:
         print('ALTER TABLE')
         for key in msg.keys():
-            list_of_name_keys = f"""ALTER TABLE {report} ADD "{key}" int"""
+            print(f"""ALTER TABLE "{report}" ADD "{key}" int""")
+            list_of_name_keys = f"""ALTER TABLE "{report}" ADD "{key}" int"""
             cursor.execute(list_of_name_keys)
         # connection.commit()
-    except (errors, Exception) as e:
+        for key_stats in ['sum_bid', 'sum_ask']:
+            print(f"""ALTER TABLE "{report}" ADD "{key_stats}" int""")
+            list_of_name_keys = f"""ALTER TABLE "{report}" ADD "stats{key_stats}" int"""
+            cursor.execute(list_of_name_keys)
+    except errors and Exception as e:
         print(e)
 
 
 def inster_into_table_one_day(cursor, msg, report):
     try:
-        name_of_column = f'{datetime.now().strftime("%H/%M/%S")}'
+        name_of_column = datetime.now().strftime("%H/%M/%S")
+        insert_table_query = f'''INSERT INTO "{report}"
+                              (name_of_column)
+                              VALUES
+                              ('{name_of_column}')
+                                                   '''
+        cursor.execute(insert_table_query)
         for key in msg.keys():
             if key in 'stats':
                 for i_key in key:
-                    insert_table_query = f'''INSERT INTO {report}
-                                                              (name_of_column, {key})
-                                                              VALUES
-                                                              ('{key}', '{i_key}')
-                                                               '''
+                    print(
+                        f'''
+                          INSERT INTO "{report}"
+                          ("stats{i_key}")
+                          VALUES
+                          ({msg.get(key, {}).get(i_key, 0)})
+                           '''
+                    )
+                    insert_table_query = f'''
+                          INSERT INTO "{report}"
+                          ("stats{key}")
+                          VALUES
+                          ({msg.get(key, {}).get(i_key, 0)})
+                           '''
                     cursor.execute(insert_table_query)
-            else:
-                 insert_table_query = f'''INSERT INTO {report}
-                                          (name_of_column, {key})
-                                          VALUES
-                                          ('{name_of_column}', {msg.get(key, 0)})
-                                           '''
-                 cursor.execute(insert_table_query)
-    except (errors, Exception) as e:
+            print(
+                f'''INSERT INTO "{report}"
+                  ("{key}")
+                  VALUES
+                  ({msg.get(key, 0)})
+                   '''
+            )
+            insert_table_query = f'''INSERT INTO "{report}"
+                  ("{key}")
+                  VALUES
+                  ({msg.get(key, 0)})
+                   '''
+            cursor.execute(insert_table_query)
+    except errors and Exception as e:
         print(e)
 
 
@@ -92,7 +125,7 @@ def export_data(cursor, name):
         with open(f'/tmp/databases/{name}/{name}_{datetime.now().strftime("%d_%m_%y")}.csv', 'w+') as write_file:
             cursor.copy_to(write_file, table=f'{name}', null='0')
         print('exit from copy')
-    except (errors, Exception) as e:
+    except errors and Exception as e:
         print(e)
 
 
@@ -100,7 +133,7 @@ def del_data(connection, cursor, name):
     try:
         insert_table_query = f'''DROP TABLE {name};'''
         cursor.execute(insert_table_query)
-    except (errors, Exception) as e:
+    except errors and Exception as e:
         print(e)
         connection.close()
         pass
@@ -117,5 +150,5 @@ def start_connection(msg):
         # close connection
         connection.commit()
         connection.close()
-    except (errors, Exception) as e:
+    except errors and Exception as e:
         print(e)

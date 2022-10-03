@@ -2,6 +2,7 @@ import json
 import logging
 import random
 import time
+from threading import Thread
 from Postgres import start_connection
 
 
@@ -37,8 +38,10 @@ def new_format_json(msg):
 
 def send_to_postgres(msg, jd):
     try:
-        print(type(jd))
+        print((jd))
         start_connection(msg)
+        # thread = Thread(target=start_connection, args=[msg])
+        # thread.start()
     except Exception as e:
         print(e)
 
