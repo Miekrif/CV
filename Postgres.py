@@ -62,14 +62,15 @@ def add_new_column_to_table(cursor, msg, report):
     try:
         print('ALTER TABLE')
         for key in msg.keys():
+            if key in 'stats':
+                for key_stats in key.keys():
+                    print(f"""ALTER TABLE "{report}" ADD "{key_stats}" int""")
+                    list_of_name_keys = f"""ALTER TABLE "{report}" ADD "stats_{key_stats}" int"""
+                    cursor.execute(list_of_name_keys)
             print(f"""ALTER TABLE "{report}" ADD "{key}" int""")
             list_of_name_keys = f"""ALTER TABLE "{report}" ADD "{key}" int"""
             cursor.execute(list_of_name_keys)
         # connection.commit()
-        for key_stats in ['sum_bid', 'sum_ask']:
-            print(f"""ALTER TABLE "{report}" ADD "{key_stats}" int""")
-            list_of_name_keys = f"""ALTER TABLE "{report}" ADD "stats{key_stats}" int"""
-            cursor.execute(list_of_name_keys)
     except errors and Exception as e:
         print(e)
 
@@ -85,7 +86,7 @@ def inster_into_table_one_day(cursor, msg, report):
         cursor.execute(insert_table_query)
         for key in msg.keys():
             if key in 'stats':
-                for i_key in key:
+                for i_key in key.keys():
                     print(
                         f'''
                           INSERT INTO "{report}"
